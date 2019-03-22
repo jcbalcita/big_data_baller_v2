@@ -1,0 +1,97 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: NBA Box Score Dynamo table and permission
+
+Parameters:
+  ReadCapacityUnits:
+    Description: Provisioned read throughput
+    Type: Number
+    Default: '5'
+    MinValue: '5'
+    MaxValue: '10000'
+    ConstraintDescription: must be between 5 and 10000
+
+  WriteCapacityUnits:
+    Description: Provisioned write throughput
+    Type: Number
+    Default: '10'
+    MinValue: '5'
+    MaxValue: '10000'
+    ConstraintDescription: must be between 5 and 10000
+
+  BigBallerUser:
+    Description: BigBaller app user
+    Type: String
+    Default: NbaDynamo
+
+
+Resources:
+  NbaBoxScoresS3:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: nba-box-scores-s3
+
+  NbaS3Policy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Sid: Stmt1544157958736
+          Action:
+          - "s3:DeleteObject*"
+          - "s3:GetObject*"
+          - "s3:PutObject*"
+          - "s3:RestoreObject*"
+          Effect: Allow
+          Resource: !GetAtt NbaBoxScoresS3.Arn
+      Users:
+      - !Ref BigBallerUser
+      ManagedPolicyName: NbaS3ReadWrite
+
+  CsvSchemaTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: nba-stats-csv-schema
+      AttributeDefinitions:
+      - AttributeName: endpoint
+        AttributeType: S
+      KeySchema:
+      - AttributeName: endpoint
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: !Ref ReadCapacityUnits
+        WriteCapacityUnits: !Ref WriteCapacityUnits
+
+  NbaDynamoPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Sid: ListAndDescribe
+          Effect: Allow
+          Action:
+          - "dynamodb:List*"
+          - "dynamodb:DescribeReservedCapacity*"
+          - "dynamodb:DescribeLimits"
+          - "dynamodb:DescribeTimeToLive"
+          Resource: "*"
+        - Sid: SpecificTable
+          Effect: Allow
+          Action:
+          - "dynamodb:BatchGet*"
+          - "dynamodb:DescribeStream"
+          - "dynamodb:DescribeTable"
+          - "dynamodb:Get*"
+          - "dynamodb:Query"
+          - "dynamodb:Scan"
+          - "dynamodb:BatchWrite*"
+          - "dynamodb:CreateTable"
+          - "dynamodb:Delete*"
+          - "dynamodb:Update*"
+          - "dynamodb:PutItem"
+          Resource: !GetAtt CsvSchemaTable.Arn
+      Users:
+      - !Ref BigBallerUser
+      ManagedPolicyName: NbaDynamoReadWrite
