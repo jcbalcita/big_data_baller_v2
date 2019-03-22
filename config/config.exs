@@ -2,24 +2,10 @@
 # and its dependencies with the aid of the Mix.Config module.
 use Mix.Config
 
-# This configuration is loaded before any dependency and is restricted
-# to this project. If another project depends on this project, this
-# file won't be loaded nor affect the parent project. For this reason,
-# if you want to provide default values for your application for
-# third-party users, it should be done in your "mix.exs" file.
-
-# You can configure your application as:
-#
-#     config :big_data_baller_v2, key: :value
-#
-# and access this configuration in your application as:
-#
-#     Application.get_env(:big_data_baller_v2, :key)
-#
-# You can also configure a third-party app:
-#
-#     config :logger, level: :info
-#
+config :ex_aws,
+  access_key_id: System.get_env("AWS_ACCESS_KEY_ID"),
+  secret_access_key: System.get_env("AWS_SECRET_ACCESS_KEY"),
+  json_codec: Jason
 
 # It is also possible to import configuration files, relative to this
 # directory. For example, you can emulate configuration per environment
