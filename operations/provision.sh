@@ -6,5 +6,5 @@ else
   profile=$1
 fi
 
-aws --profile $profile cloudformation deploy --stack-name "big-data-baller" --template-file "provision.yml"
+aws --profile $profile cloudformation deploy --stack-name "big-data-baller" --template-file "provision.yml" --capabilities CAPABILITY_NAMED_IAM
 
