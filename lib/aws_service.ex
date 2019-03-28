@@ -5,9 +5,9 @@ defmodule BigDataBaller.AwsService do
   def creds? do
     if Application.get_env(:ex_aws, :access_key_id) &&
         Application.get_env(:ex_aws, :secret_access_key) do
-      :ok
+      {:ok, "Creds in environment"}
     else
-      :aws_error
+      {:error, "No AWS creds in enviroment!"}
     end
   end
 
@@ -15,4 +15,6 @@ defmodule BigDataBaller.AwsService do
     @aws.S3.put_object(bucket_name, path, data)
     |> @aws.request()
   end
+
+  def s3_bucket, do: "nba-box-scores-s3"
 end

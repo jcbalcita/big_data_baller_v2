@@ -7,7 +7,7 @@ defmodule BigDataBaller.AwsServiceTest do
     # given
     Application.delete_env(:ex_aws, :access_key_id)
     Application.delete_env(:ex_aws, :secret_access_key)
-    expected = :aws_error
+    expected = {:error, "No AWS creds in enviroment!"}
     # when
     result = AwsService.creds?
     # then
@@ -18,7 +18,7 @@ defmodule BigDataBaller.AwsServiceTest do
     # given
     Application.put_env(:ex_aws, :access_key_id, "something")
     Application.put_env(:ex_aws, :secret_access_key, "something")
-    expected = :ok
+    expected = {:ok, "Creds in environment"}
     # when
     result = AwsService.creds?
     # then
