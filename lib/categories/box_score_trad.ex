@@ -44,15 +44,14 @@ defmodule BigDataBaller.BoxScore do
     with {:ok, date_str} <- Timex.format(category.current_datetime, @game_date_format),
          {:ok, response} <- Nba.Stats.scoreboard(%{"gameDate" => date_str}),
          game_headers <- Map.get(response, "GameHeader") do
-
       if game_headers,
         do: Enum.each(game_headers, &process_game(&1, category)),
         else: IO.puts("Error fetching scoreboard for #{date_str}")
     else
       {:error, message} ->
         date = Timex.format!(category.current_datetime, @game_date_format)
-        IO.puts message
-        IO.puts "Unable to fetch scoreboard for #{date}"
+        IO.puts(message)
+        IO.puts("Unable to fetch scoreboard for #{date}")
     end
   end
 

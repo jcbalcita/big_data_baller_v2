@@ -4,7 +4,7 @@ defmodule BigDataBaller.AwsService do
 
   def creds? do
     if Application.get_env(:ex_aws, :access_key_id) &&
-        Application.get_env(:ex_aws, :secret_access_key) do
+         Application.get_env(:ex_aws, :secret_access_key) do
       {:ok, "Creds in environment"}
     else
       {:error, "No AWS creds in enviroment!"}

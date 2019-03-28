@@ -3,7 +3,8 @@ defmodule BigDataBaller.Time do
 
   def tuple_to_datetime(date_tuple) do
     case Timex.to_datetime(date_tuple) do
-      {:error, error} ->
+      {:error, message} -> {:error, message}
+      {:ok, datetime} -> {:ok, datetime}
     end
   end
 
