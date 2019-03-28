@@ -25,7 +25,5 @@ defmodule BigDataBaller.Time do
     Timex.after?(current_datetime, end_datetime)
   end
 
-  def get_year(%{current_datetime: dt}) do
-    Timex.format(dt, "YYYY")
-  end
+  def get_year(%{interval: :day, current_datetime: dt}), do: Timex.format(dt, "YYYY")
 end

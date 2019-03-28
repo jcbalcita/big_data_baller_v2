@@ -3,7 +3,7 @@ defmodule BigDataBaller.BoxScore do
   alias BigDataBaller.AwsService
   alias BigDataBaller.Time
 
-  @gaem_date_format "{YYYY}/{0M}/{0D}"
+  @game_date_format "{YYYY}/{0M}/{0D}"
 
   def run(date), do: run(date, date)
 
@@ -11,8 +11,8 @@ defmodule BigDataBaller.BoxScore do
     with {:ok, _} <- AwsService.creds?(),
          {:ok, start_datetime} <- Time.tuple_to_datetime(start_date),
          {:ok, end_datetime} <- Time.tuple_to_datetime(end_date),
-         box_score_struct <- new_category(start_datetime, end_datetime) do
-      step_through_days(box_score_struct)
+         category <- new_category(start_datetime, end_datetime) do
+      step_through_days(category)
     else
       {:error, message} -> IO.puts(message)
       _ -> IO.puts("#{__MODULE__}: Something went wrong")
@@ -35,7 +35,7 @@ defmodule BigDataBaller.BoxScore do
       IO.puts("Done fetching box scores for the specified time range")
     else
       IO.puts(category.current_datetime)
-      # fetch_and_persist(category)
+      fetch_and_persist(category)
       step_through_days(Time.step(category))
     end
   end
@@ -48,10 +48,7 @@ defmodule BigDataBaller.BoxScore do
         do: Enum.each(game_headers, &process_game(&1, category)),
         else: IO.puts("Error fetching scoreboard for #{date_str}")
     else
-      {:error, message} ->
-        date = Timex.format!(category.current_datetime, @game_date_format)
-        IO.puts(message)
-        IO.puts("Unable to fetch scoreboard for #{date}")
+      {:error, message} -> IO.puts(message)
     end
   end
 
