@@ -6,8 +6,11 @@ defmodule BigDataBaller.Util do
   end
 
   def season_year_suffix(season_start_year) when is_binary(season_start_year) do
-    (elem(Integer.parse(season_start_year), 0))
-    |> season_year_suffix()
+    maybe_parsed = Integer.parse(season_start_year)
+    case maybe_parsed do
+      {num, _} -> season_year_suffix(num)
+      :error -> raise %RuntimeError{message: "Unable to parse #{season_start_year} as an integer"}
+    end
   end
 
   def querystring_season(start_year) do

@@ -26,6 +26,8 @@ big_data_baller_v2-*.tar
 /syncS3/
 .env
 
+.DS_STORE
+
 # generated data
 /spark/csv/
 /spark/parquet/

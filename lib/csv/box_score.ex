@@ -1,57 +1,117 @@
 defmodule BigDataBaller.Csv.BoxScore do
+  alias BigDataBaller.Csv.BoxScore
+
+  defstruct [:team_stats, :player_stats, :home_team, :away_team]
+
+  defp file_library, do: Application.get_env(:big_data_baller, :file_library, File)
+  defp io, do: Application.get_env(:big_data_baller, :io, IO)
+
+  defp dir_path, do: "spark/csv/box_score"
 
   def run(start_year \\ 1996, end_year \\ 2018) do
     start_year..end_year |> Enum.each(&run_year/1)
   end
 
   def run_year(year) do
-    File.mkdir("spark/csv/box_score")
-    File.touch("spark/csv/box_score/#{year}.csv")
-    {:ok, file} = File.open("spark/csv/box_score/#{year}.csv", [:write, :utf8])
+    case open_file(year) do
+      {:ok, file} ->
+        Path.wildcard("syncS3/box_score/#{year}/**/*.json")
+        |> convert_to_matrix()
+        |> CSV.encode()
+        |> Enum.each(fn contents -> io().write(file, contents) end)
 
-    Path.wildcard("syncS3/box_score/#{year}/**/*.json")
-    |> convert_to_matrix()
-    |> CSV.encode()
-    |> Enum.each(&IO.write(file, &1))
+        file_library().close(file)
 
-    File.close(file)
+      {:error, error} ->
+        raise %RuntimeError{message: error}
+
+      _ ->
+        raise %RuntimeError{message: "Unable to create csv file for the year #{year}"}
+    end
+  end
+
+  defp open_file(year) do
+    with {:ok, filepath} <- maybe_create_dir(year),
+         {:ok, file} <- get_new_csv_file(filepath) do
+      {:ok, file}
+    else
+      {:error, error} ->
+        raise %RuntimeError{message: error}
+    end
+  end
+
+  defp maybe_create_dir(year) do
+    filepath = "#{dir_path()}/#{year}.csv"
+
+    if file_library().dir?(dir_path()) do
+      {:ok, filepath}
+    else
+      io().puts "Creating directory - #{dir_path()}"
+      case file_library().mkdir(dir_path()) do
+        :ok -> {:ok, filepath}
+        _ -> {:error, "Could not create directory"}
+      end
+    end
+  end
+
+  defp get_new_csv_file(filepath) do
+    case file_library().stat(filepath) do
+      {:ok, _} ->
+        file_library().rm!(filepath)
+        io().puts("Deleted existing file #{filepath}")
+        create_and_open_csv_file(filepath)
+
+      {:error, :enoent} ->
+        create_and_open_csv_file(filepath)
+    end
+  end
+
+  defp create_and_open_csv_file(filepath) do
+    with :ok <- file_library().touch(filepath) do
+      io().puts("Touched new file #{filepath}")
+      file_library().open(filepath, [:write, :utf8])
+    else
+      _ -> {:error, "Could not create file #{filepath}"}
+    end
   end
 
   defp convert_to_matrix(filepaths) do
     filepaths
     |> Enum.reduce([], fn filepath, acc ->
-      if String.contains?(filepath, "WSTEST") || String.contains?(filepath, "ESTWST") do 
-        acc
-      else 
-        player_rows = create_player_rows(filepath) 
-        case player_rows do
-          nil -> acc
-          _ -> Enum.concat(acc, create_player_rows(filepath))
-        end
+      player_rows = create_player_rows(filepath)
+      case player_rows do
+        nil -> acc
+        _ -> Enum.concat(acc, create_player_rows(filepath))
       end
     end)
   end
 
   defp create_player_rows(filepath) do
-    with {:ok, body} <- File.read(filepath),
-         {:ok, json} <- Jason.decode(body),
-         home_away_names <- home_and_away_teams_from_filepath(filepath) do
-      
-      if not_an_all_star_game(json), do: create_rows(json, home_away_names)
+    with {:ok, body} <- file_library().read(filepath),
+         {:ok, game_map} <- Jason.decode(body),
+         box_score <- game_map_to_box_score_struct(game_map, filepath) do
+      if !all_star_game?(box_score), do: create_rows(box_score)
     else
-      _ -> IO.puts("[ERROR] Unable to ro read #{filepath}")
+      {:error, error} -> io().puts(error)
+      _ -> io().puts("[ERROR] Unable to ro read #{filepath}")
     end
   end
 
-  def create_rows(box_score, home_away_names) do
-    player_stats = Map.get(box_score, "PlayerStats")
-    team_stats = Map.get(box_score, "TeamStats")
-    [{_, home_team} | _ ] = get_team_home_away_status(team_stats, home_away_names)
+  defp game_map_to_box_score_struct(game, filepath) do
+    {home_team, away_team} = home_and_away_teams_from_filepath(filepath)
+   %BoxScore{
+      team_stats: Map.get(game, "TeamStats"),
+      player_stats: Map.get(game, "PlayerStats"),
+      home_team: home_team,
+      away_team: away_team
+    }
+  end
 
+  def create_rows(%{player_stats: player_stats, home_team: home_team}) do
     Enum.map(player_stats, &get_player_stats(&1, home_team))
   end
 
-  defp get_player_stats(player_map, home_team_name) do
+  defp get_player_stats(player_map, home_team) do
     [
       player_map["PLAYER_ID"],
       minutes(player_map["MIN"]),
@@ -75,7 +135,7 @@ defmodule BigDataBaller.Csv.BoxScore do
       player_map["START_POSITION"],
       player_map["PLUS_MINUS"],
       player_map["GAME_ID"],
-      player_map["TEAM_ABBREVIATION"] == home_team_name
+      player_map["TEAM_ABBREVIATION"] == home_team
     ]
   end
 
@@ -83,20 +143,6 @@ defmodule BigDataBaller.Csv.BoxScore do
 
   defp minutes(min_str),
     do: String.split(min_str, ":") |> List.first() |> Integer.parse() |> elem(0)
-
-  defp get_team_home_away_status(team_stats, {home_name, away_name}) do
-    home_id =
-      team_stats
-      |> Enum.find(fn team -> team["TEAM_ABBREVIATION"] == home_name end)
-      |> Map.get("TEAM_ID")
-
-    away_id =
-      team_stats
-      |> Enum.find(fn team -> team["TEAM_ABBREVIATION"] != home_name end)
-      |> Map.get("TEAM_ID")
-
-    [{home_id, home_name}, {away_id, away_name}]
-  end
 
   defp home_and_away_teams_from_filepath(filepath) do
     String.split(filepath, "/")
@@ -108,11 +154,10 @@ defmodule BigDataBaller.Csv.BoxScore do
     |> String.split_at(3)
   end
 
-  defp not_an_all_star_game(game) do
-    team_city = Map.get(game, "TeamStats")
-      |> List.first()
-      |> Map.get("TEAM_CITY")
-    
-    team_city != "Team"
+  defp all_star_game?(%{team_stats: [team | _], home_team: home_team}) do
+    is_new_style_asg = team["TEAM_CITY"] == "Team"
+    is_old_style_asg = home_team == "WST" || home_team == "EST"
+
+    is_new_style_asg || is_old_style_asg
   end
 end
