@@ -25,3 +25,7 @@ big_data_baller_v2-*.tar
 # AWS
 /syncS3/
 .env
+
+# generated data
+/spark/csv/
+/spark/parquet/

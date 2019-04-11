@@ -41,7 +41,7 @@ defmodule BigDataBaller.BoxScore do
       end_datetime: end_datetime,
       interval: :day,
       s3_bucket: AwsService.s3_bucket(),
-      s3_root_dir: "box_score_trad"
+      s3_root_dir: "box_score"
     }
   end
 
@@ -66,7 +66,7 @@ defmodule BigDataBaller.BoxScore do
     end
   end
 
-  defp process_game(game_info, %{endpoint: endpoint, current_datetime: dt, s3_root_dir: s3_root_dir} = category) do
+  defp process_game(game_info, %{endpoint: endpoint, current_datetime: dt, s3_root_dir: s3_root_dir}) do
     with season_start_year <- game_info["SEASON"],
          qs_season <- Util.querystring_season(season_start_year),
          gid <- game_info["GAME_ID"],
