@@ -66,6 +66,6 @@ if __name__ == "__main__":
             df = df.withColumn(col, df[col].cast(IntegerType()))
 
         for col in decimal_cols:
-            df = df.withColumn(col, df[col].cast(DecimalType()))
+            df = df.withColumn(col, df[col].cast(DecimalType(10,5)))
 
         df.write.parquet("parquet/player/player_bio_stats/" + str(year))
