@@ -9,6 +9,11 @@ defmodule BigDataBaller.Persist do
     persist(parquet_filepaths)
   end
 
+  def player_bio_stats do
+    parquet_filepaths = Path.wildcard("spark/parquet/player/player_bio_stats/**/part*")
+    persist(parquet_filepaths)
+  end
+
   def persist(local_filepaths) do
     Enum.each(local_filepaths, &read_and_upload/1)
   end

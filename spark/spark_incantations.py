@@ -7,7 +7,8 @@ from pyspark.sql.window import Window
 
 sc = SparkContext(appName="parquery")
 sql = SQLContext(sc)
-data = sql.read.parquet("parquet/**/part*")
+data = sql.read.parquet("parquet/box_score/**/part*")
+player_bio_stats = sql.read.parquet("parquet/player/player_bio_stats/*/part*")
 
 ## career stats (total)
 data.where(data.player_name == "Von Wafer").groupBy("player_name").sum().select("player_name", "sum(pts)").show()
