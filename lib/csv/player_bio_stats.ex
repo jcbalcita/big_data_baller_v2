@@ -16,8 +16,7 @@ defmodule BigDataBaller.Csv.PlayerBioStats do
   def run_year(year) do
     case open_csv_file(year) do
       {:ok, file} ->
-        file_to_read = "syncS3/player/player_bio_stats/#{year}.json"
-        convert_to_matrix(file_to_read)
+        convert_to_matrix(year)
         |> CSV.encode()
         |> Enum.each(fn contents -> io().write(file, contents) end)
 
@@ -29,15 +28,16 @@ defmodule BigDataBaller.Csv.PlayerBioStats do
     end
   end
 
-  defp convert_to_matrix(filepath) do
-    with {:ok, contents} <- file_library().read(filepath),
+  defp convert_to_matrix(year) do
+    with filepath <- "syncS3/player/player_bio_stats/#{year}.json",
+         {:ok, contents} <- file_library().read(filepath),
          {:ok, json_season} <- BigDataBaller.json_library().decode(contents),
          players <- Map.get(json_season, "LeagueDashPlayerBioStats") do
       Enum.filter(players, fn player -> player["PLAYER_NAME"] != nil && player["PLAYER_NAME"] != "" end)
       Enum.sort_by(players, fn player -> player["PLAYER_ID"] end)
-      |> Enum.map(&get_player_bio_stats/1)
+      |> Enum.map(&get_player_bio_stats(&1, year))
     else
-      _ -> IO.puts("Error reading #{filepath}")
+      _ -> IO.puts("Error reading #{year}")
     end
   end
 
@@ -86,7 +86,7 @@ defmodule BigDataBaller.Csv.PlayerBioStats do
     end
   end
 
-  defp get_player_bio_stats(player) do
+  defp get_player_bio_stats(player, year) do
     [
       player["PLAYER_ID"],
       player["PLAYER_NAME"],
@@ -110,7 +110,8 @@ defmodule BigDataBaller.Csv.PlayerBioStats do
       player["AST_PCT"],
       player["NET_RATING"],
       player["TEAM_ABBREVIATION"],
-      player["TEAM_ID"]
+      player["TEAM_ID"],
+      year
     ]
   end
 end

@@ -16,6 +16,7 @@ if __name__ == "__main__":
             "player_weight",
             "draft_number",
             "draft_round",
+            "season",
             "draft_year"
             ]
 
@@ -56,7 +57,8 @@ if __name__ == "__main__":
             StructField("ast_pct", StringType(), True),
             StructField("net_rating", StringType(), True),
             StructField("team_abbreviation", StringType(), True),
-            StructField("team_id", StringType(), True)])
+            StructField("team_id", StringType(), True),
+            StructField("season", StringType(), True)])
 
     for year in range(1996, 2019):
         rdd = sc.textFile("csv/player/player_bio_stats/" + str(year) + ".csv").map(lambda line: line.split(","))
