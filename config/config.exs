@@ -7,6 +7,9 @@ config :ex_aws,
   secret_access_key: System.get_env("AWS_SECRET_ACCESS_KEY"),
   json_codec: Jason
 
+config :nba,
+  endpoint_json_path: "/Users/jc.balcita/projects/elixir-nba/test/fakes/test_endpoints.json"
+
 # It is also possible to import configuration files, relative to this
 # directory. For example, you can emulate configuration per environment
 # by uncommenting the line below and defining dev.exs, test.exs and such.
