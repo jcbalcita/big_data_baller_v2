@@ -1,9 +1,8 @@
 defmodule BigDataBaller.AwsService do
-  @date_directory_format "{YYYY}/{0M}/{0D}"
-
   defp aws_library, do: Application.get_env(:big_data_baller, :aws_library, ExAws)
   defp s3_library, do: Application.get_env(:big_data_baller, :s3_library, ExAws.S3)
 
+  @spec creds? :: {:error, String.t} | {:ok, String.t}
   def creds? do
     if Application.get_env(:ex_aws, :access_key_id) &&
          Application.get_env(:ex_aws, :secret_access_key) do

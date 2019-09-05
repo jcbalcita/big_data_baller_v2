@@ -1,21 +1,19 @@
 defmodule BigDataBaller.Persist do
   alias BigDataBaller.AwsService
-  alias BigDataBaller.Persist
+
+  @local_bio_stats "spark/parquet/player/player_bio_stats/**/part*"
+  @local_box_scores "spark/parquet/**/part*"
 
   defp file_library, do: Application.get_env(:big_data_baller, :file_library, File)
 
   def box_score_parquet do
-    parquet_filepaths = Path.wildcard("spark/parquet/**/part*")
-    persist(parquet_filepaths)
+    Path.wildcard(@local_box_scores)
+    |> Enum.each(&read_and_upload/1)
   end
 
   def player_bio_stats do
-    parquet_filepaths = Path.wildcard("spark/parquet/player/player_bio_stats/**/part*")
-    persist(parquet_filepaths)
-  end
-
-  def persist(local_filepaths) do
-    Enum.each(local_filepaths, &read_and_upload/1)
+    Path.wildcard(@local_bio_stats)
+    |> Enum.each(&read_and_upload/1)
   end
 
   defp read_and_upload(filepath) do

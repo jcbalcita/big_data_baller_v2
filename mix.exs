@@ -28,7 +28,7 @@ defmodule BigDataBaller.MixProject do
       {:ex_aws_dynamo, "~> 2.0"},
       {:sweet_xml, "~> 0.6"},
       {:hackney, "~> 1.15"},
-      {:timex, "~> 3.5"},
+      {:timex, "~> 3.6"},
       {:csv, "~> 2.3"}
     ]
   end

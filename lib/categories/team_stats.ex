@@ -1,6 +1,6 @@
 defmodule BigDataBaller.TeamStats do
   alias BigDataBaller.Category
-  alias BigDataBaller.Util
+  alias BigDataBaller.AwsService
 
   @measure_types %{
     four_factors: "Four Factors",

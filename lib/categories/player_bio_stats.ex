@@ -4,8 +4,6 @@ defmodule BigDataBaller.PlayerBioStats do
   alias BigDataBaller.TimeService
   alias BigDataBaller.Util
 
-  @s3_directory_format "{YYYY}"
-
   def run(year), do: run(year, year)
 
   def run(start_year, end_year) do

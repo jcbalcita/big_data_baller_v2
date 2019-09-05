@@ -1,6 +1,4 @@
 defmodule BigDataBaller.Csv.PlayerBioStats do
-  alias BigDataBaller.Csv.PlayerBioStats
-
   @dir_path "spark/csv/player/player_bio_stats"
 
   defstruct [:team_stats, :player_stats, :home_team, :away_team]
